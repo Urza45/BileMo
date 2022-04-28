@@ -17,6 +17,7 @@ framework:
     #fragments: true
     php_errors:
         log: true
+    error_controller: App\Controller\MainController::customError
 
 when@test:
     framework:

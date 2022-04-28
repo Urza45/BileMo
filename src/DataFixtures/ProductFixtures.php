@@ -6,7 +6,7 @@ use App\Entity\Product;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 
-class AppFixtures extends Fixture
+class ProductFixtures extends Fixture
 {
     public function load(ObjectManager $manager): void
     {
@@ -19,6 +19,7 @@ class AppFixtures extends Fixture
         Prêt pour le futur en 5G');
         $product->setColor('Bleu');
         $product->setPrice(499.00);
+        $product->setCreatedAt(new \datetime);
 
         $manager->persist($product);
 
@@ -30,6 +31,7 @@ class AppFixtures extends Fixture
         Double SIM');
         $product->setColor('Noir');
         $product->setPrice(44.90);
+        $product->setCreatedAt(new \datetime);
 
         $manager->persist($product);
 
@@ -41,6 +43,7 @@ class AppFixtures extends Fixture
         Triple caméra avec Intelligence Artificielle 13Mp');
         $product->setColor('Noir');
         $product->setPrice(179.00);
+        $product->setCreatedAt(new \datetime);
 
         $manager->persist($product);
 
@@ -51,10 +54,10 @@ class AppFixtures extends Fixture
         Processeur MT6260A
         Appareil photo 3 MP');
         $product->setColor('Rouge');
-        $product->setPrice(89,90);
+        $product->setPrice(89, 90);
+        $product->setCreatedAt(new \datetime);
 
         $manager->persist($product);
-
 
         $manager->flush();
     }

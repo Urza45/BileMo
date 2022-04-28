@@ -4,14 +4,13 @@ namespace App\Controller\api;
 
 use App\Entity\Product;
 use App\Repository\ProductRepository;
+use Container64kdti8\getProductControllerService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
@@ -23,55 +22,37 @@ class ProductController extends AbstractController
      * 
      * @Route("/api/products", name="api_product_list", methods={"GET"})
      */
-    public function showProductsList(ProductRepository $repoProduct, SerializerInterface $serializer): Response
+    public function showProductsList(ProductRepository $repoProduct): Response
     {
-        // $products = $repoProduct->findAll();
-
-        // $data = $serializer->serialize(
-        //     $products,
-        //     'json',
-        //     ['groups' => 'list_product']
-        // );
-        // Méthode 1
-        // $response = new Response($data);
-        // $response->headers->set('Content-Type', 'application/json');
-
-        // Méthode 2
-        // $response = new Response($data, 200, [
-        //     'content-type' => 'application/json'
-        // ]);
-
-        // Méthode 3
-        // $response = new JsonResponse($data, 200, [], true);
-
-        // Méthode 4 : une seule ligne pour tout faire
-        //$response = $this->json($products, 200, [], ['groups' => 'list_product']);
-
-        // Méthode 5 on refactorise encore
-        return $this->json($repoProduct->findAll(), 200, [], ['groups' => 'list_product']);
-
-        //return $response;
+        return $this->json(
+            $repoProduct->findAll(),
+            Response::HTTP_OK,
+            [],
+            ['groups' => 'list_product']
+        );
     }
 
     /**
      * Return a product in a json response
      * 
-     * @Route("/api/products/{index}", name="api_product_show", methods={"GET"}, requirements={"index"="\d+"})
+     * @Route("/api/products/{id}", name="api_product_show", methods={"GET"}, requirements={"id"="\d+"})
      */
-    public function showProduct(ProductRepository $repoProduct, SerializerInterface $serializer, Request $request): Response
+    // public function showProduct(ProductRepository $repoProduct, Request $request): Response
+    public function showProduct(Product $product = null, Request $request): Response
     {
-        $product = $repoProduct->findOneBy(['id' => $request->get('index')]);
+        //$product = $repoProduct->findOneBy(['id' => $request->get('index')]);
 
-        $data = $serializer->serialize(
-            $product,
-            'json',
-            ['groups' => 'show_product']
+        if ($product) {
+            return $this->json($product, Response::HTTP_OK, [], ['groups' => 'show_product']);
+        }
+
+        return $this->json(
+            [
+                'status' => Response::HTTP_NOT_FOUND,
+                'message' => 'Le produit recherché n\'a pas été trouvé'
+            ],
+            Response::HTTP_BAD_REQUEST
         );
-
-        $response = new Response($data);
-        $response->headers->set('Content-Type', 'application/json');
-
-        return $response;
     }
 
     /**
@@ -86,6 +67,7 @@ class ProductController extends AbstractController
         try {
             $product = $serializer->deserialize($data, Product::class, 'json');
 
+            $product->setCreatedAt(new \Datetime);
             $errors = $validator->validate($product);
 
             if (count($errors) > 0) {
@@ -96,17 +78,25 @@ class ProductController extends AbstractController
             $manager->persist($product);
             $manager->flush();
 
-            // return new Response('', Response::HTTP_CREATED);
-            return $this->json($product, Response::HTTP_CREATED, [], ['groups' => 'show_product']);
+            return $this->json(
+                $product,
+                Response::HTTP_CREATED,
+                [],
+                ['groups' => 'show_product']
+            );
         } catch (NotEncodableValueException $e) {
-            return $this->json([
-                'status' => Response::HTTP_BAD_REQUEST,
-                'message' => $e->getMessage()
-            ], Response::HTTP_BAD_REQUEST);
+            return $this->json(
+                [
+                    'status' => Response::HTTP_BAD_REQUEST,
+                    'message' => $e->getMessage()
+                ],
+                Response::HTTP_BAD_REQUEST
+            );
         } catch (NotNormalizableValueException $e) {
+            dd($e);
             return $this->json([
                 'status' => Response::HTTP_BAD_REQUEST,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], Response::HTTP_BAD_REQUEST);
         }
     }

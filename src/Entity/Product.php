@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\ProductRepository;
+use Symfony\Component\Validator\Constraints\Type as Astype;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -36,8 +37,10 @@ class Product
 
     /**
      * @ORM\Column(type="float", nullable=true)
-     * 
-     * @Assert\Type("float")
+     * @Assert\Type(
+     *     type="float",
+     *     message="This value is not a valid float number"
+     * )
      * @Groups({"show_product"})
      */
     private $price;
@@ -47,6 +50,12 @@ class Product
      * @Groups({"show_product"})
      */
     private $color;
+
+    /**
+     * @ORM\Column(type="datetime")
+     * @Assert\NotBlank(message="La date de création doit être renseignée.")
+     */
+    private $createdAt;
 
     public function getId(): ?int
     {
@@ -97,6 +106,18 @@ class Product
     public function setColor(?string $color): self
     {
         $this->color = $color;
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeInterface $createdAt): self
+    {
+        $this->createdAt = $createdAt;
 
         return $this;
     }
