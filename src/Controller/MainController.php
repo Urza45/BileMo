@@ -7,10 +7,17 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
+/**
+ * MainController
+ */
 class MainController extends AbstractController
 {
     /**
+     * index
+     * 
      * @Route("/main", name="app_main")
+     *
+     * @return Response
      */
     public function index(): Response
     {
@@ -20,7 +27,12 @@ class MainController extends AbstractController
     }
 
     /**
+     * customError
+     * 
      * @Route("/error404", name="app_error_404")
+     *
+     * @param  Request $request
+     * @return void
      */
     public function customError(Request $request)
     {

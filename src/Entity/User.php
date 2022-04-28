@@ -2,8 +2,9 @@
 
 namespace App\Entity;
 
-use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\UserRepository;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass=UserRepository::class)
@@ -14,36 +15,43 @@ class User
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @Groups({"list_user"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Groups({"show_user", "list_user"})
      */
     private $firstName;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Groups({"show_user", "list_user"})
      */
     private $lastName;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Groups({"show_user", "list_user"})
      */
     private $email;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups({"show_user"})
      */
     private $address;
 
     /**
      * @ORM\Column(type="string", length=10, nullable=true)
+     * @Groups({"show_user"})
      */
     private $postalCode;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups({"show_user"})
      */
     private $city;
 
@@ -51,6 +59,11 @@ class User
      * @ORM\ManyToOne(targetEntity=client::class, inversedBy="users")
      */
     private $client;
+
+    public function __construct()
+    {
+        $this->createdAt = new \DateTimeImmutable();
+    }
 
     public function getId(): ?int
     {

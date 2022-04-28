@@ -4,7 +4,6 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\ProductRepository;
-use Symfony\Component\Validator\Constraints\Type as Astype;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -56,6 +55,11 @@ class Product
      * @Assert\NotBlank(message="La date de création doit être renseignée.")
      */
     private $createdAt;
+
+    public function __construct()
+    {
+        $this->createdAt = new \DateTimeImmutable();
+    }
 
     public function getId(): ?int
     {

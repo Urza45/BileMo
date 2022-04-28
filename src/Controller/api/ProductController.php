@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Controller\api;
+namespace App\Controller\Api;
 
 use App\Entity\Product;
 use App\Repository\ProductRepository;
-use Container64kdti8\getProductControllerService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,12 +14,19 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 
+/**
+ * ProductController
+ */
 class ProductController extends AbstractController
 {
     /**
+     * showProductsList
      * Return list of product in a json response
      * 
      * @Route("/api/products", name="api_product_list", methods={"GET"})
+     *
+     * @param  ProductRepository $repoProduct
+     * @return Response
      */
     public function showProductsList(ProductRepository $repoProduct): Response
     {
@@ -33,15 +39,16 @@ class ProductController extends AbstractController
     }
 
     /**
+     * showProduct
      * Return a product in a json response
      * 
      * @Route("/api/products/{id}", name="api_product_show", methods={"GET"}, requirements={"id"="\d+"})
+     * 
+     * @param  Product $product
+     * @return Response
      */
-    // public function showProduct(ProductRepository $repoProduct, Request $request): Response
-    public function showProduct(Product $product = null, Request $request): Response
+    public function showProduct(Product $product = null): Response
     {
-        //$product = $repoProduct->findOneBy(['id' => $request->get('index')]);
-
         if ($product) {
             return $this->json($product, Response::HTTP_OK, [], ['groups' => 'show_product']);
         }
@@ -56,9 +63,16 @@ class ProductController extends AbstractController
     }
 
     /**
+     * addProduct
      * Add a product from a json request
      * 
      * @Route("/api/products", name="api_product_add", methods={"POST"})
+     *
+     * @param  ManagerRegistry $doctrine
+     * @param  SerializerInterface $serializer
+     * @param  Request $request
+     * @param  ValidatorInterface $validator
+     * @return Response
      */
     public function addProduct(ManagerRegistry $doctrine, SerializerInterface $serializer, Request $request, ValidatorInterface $validator): Response
     {
@@ -93,7 +107,6 @@ class ProductController extends AbstractController
                 Response::HTTP_BAD_REQUEST
             );
         } catch (NotNormalizableValueException $e) {
-            dd($e);
             return $this->json([
                 'status' => Response::HTTP_BAD_REQUEST,
                 'message' => $e->getMessage(),
