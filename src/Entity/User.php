@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\UserRepository;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass=UserRepository::class)
@@ -22,17 +23,19 @@ class User
     /**
      * @ORM\Column(type="string", length=255)
      * @Groups({"show_user", "list_user"})
+     * @Assert\NotBlank(message="Le champ firstName ne peut être vide.")
      */
     private $firstName;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Groups({"show_user", "list_user"})
+     * @Assert\NotBlank(message="Le champ lastName ne peut être vide.")
      */
     private $lastName;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, unique=true)
      * @Groups({"show_user", "list_user"})
      */
     private $email;
@@ -46,6 +49,11 @@ class User
     /**
      * @ORM\Column(type="string", length=10, nullable=true)
      * @Groups({"show_user"})
+     * @Assert\Length(
+     *      min = 5,
+     *      max = 5,
+     *      exactMessage = "Les codes postaux en France ont une longueur exacte de {{ limit }} chiffres.",
+     * )
      */
     private $postalCode;
 
@@ -56,9 +64,14 @@ class User
     private $city;
 
     /**
-     * @ORM\ManyToOne(targetEntity=client::class, inversedBy="users")
+     * @ORM\ManyToOne(targetEntity=Client::class, inversedBy="users")
      */
     private $client;
+
+    /**
+     * @ORM\Column(type="datetime_immutable")
+     */
+    private $createdAt;
 
     public function __construct()
     {
@@ -150,6 +163,18 @@ class User
     public function setClient(?client $client): self
     {
         $this->client = $client;
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): self
+    {
+        $this->createdAt = $createdAt;
 
         return $this;
     }

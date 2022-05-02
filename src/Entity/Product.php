@@ -36,9 +36,10 @@ class Product
 
     /**
      * @ORM\Column(type="float", nullable=true)
-     * @Assert\Type(
-     *     type="float",
-     *     message="This value is not a valid float number"
+     * @Assert\Range(
+     *      min = 0,
+     *      max = 999,
+     *      notInRangeMessage = "Le prix doit se situer entre {{ min }} € et {{ max }} €",
      * )
      * @Groups({"show_product"})
      */
@@ -52,7 +53,6 @@ class Product
 
     /**
      * @ORM\Column(type="datetime")
-     * @Assert\NotBlank(message="La date de création doit être renseignée.")
      */
     private $createdAt;
 

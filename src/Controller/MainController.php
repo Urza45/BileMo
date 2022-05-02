@@ -2,10 +2,11 @@
 
 namespace App\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\ErrorHandler\Exception\FlattenException;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 /**
  * MainController
@@ -15,7 +16,7 @@ class MainController extends AbstractController
     /**
      * index
      * 
-     * @Route("/main", name="app_main")
+     * @Route("/", name="app_main")
      *
      * @return Response
      */
@@ -29,19 +30,19 @@ class MainController extends AbstractController
     /**
      * customError
      * 
-     * @Route("/error404", name="app_error_404")
+     * @Route("/error", name="app_error")
      *
      * @param  Request $request
      * @return void
      */
-    public function customError(Request $request)
+    public function customError(FlattenException $exception)
     {
         return $this->json(
             [
-                Response::HTTP_INTERNAL_SERVER_ERROR,
-                $request->attributes->get('exception')->getMessage()
+                $exception->getStatusCode(),
+                $exception->getMessage(),
             ],
-            Response::HTTP_INTERNAL_SERVER_ERROR
+            $exception->getStatusCode()
         );
     }
 }
