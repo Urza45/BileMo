@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Services\HttpCode;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -40,7 +41,8 @@ class MainController extends AbstractController
         return $this->json(
             [
                 $exception->getStatusCode(),
-                $exception->getMessage(),
+                HttpCode::getHttpMessage($exception->getStatusCode()),
+                $exception->getMessage()
             ],
             $exception->getStatusCode()
         );

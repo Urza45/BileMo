@@ -29,7 +29,7 @@ class UserController extends AbstractController
      */
     public function showUserList(ClientRepository $repoClient, Request $request): Response
     {
-        $client = $repoClient->findOneBy(['id' => $request->get('index')]);
+        $client = $repoClient->findOneBy(['id' => $this->getUser()->getId()]);
 
         return $this->json(
             $client->getUsers(),
@@ -52,11 +52,11 @@ class UserController extends AbstractController
     public function showUser(User $user = null, Request $request): Response
     {
         if ($user) {
-            if ($user->getClient()->getId() != $request->get('index')) {
+            if ($user->getClient()->getId() != $this->getUser()->getId()) {
                 return $this->json(
                     [
                         'status' => Response::HTTP_FORBIDDEN,
-                        'message' => 'Vous n\avez pas accès aux informations de cet utilisateur'
+                        'message' => 'Vous n\'avez pas accès aux informations de cet utilisateur'
                     ],
                     Response::HTTP_FORBIDDEN
                 );
@@ -136,11 +136,10 @@ class UserController extends AbstractController
      * @param  UserRepository $repoUSer
      * @return Response
      */
-    public function deleteUser(User $user, Request $request, UserRepository $repoUSer): Response
+    public function deleteUser(User $user = null, Request $request, UserRepository $repoUSer): Response
     {
         if ($user) {
-            $client = $user->getClient();
-            if ($client->getId() != $request->get('index')) {
+            if ($user->getClient()->getId() != $this->getUser()->getId()) {
                 return $this->json(
                     [
                         'status' => Response::HTTP_FORBIDDEN,

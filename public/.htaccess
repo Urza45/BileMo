@@ -7,3 +7,6 @@ ErrorDocument 404 /error404
 # RewriteRule ^admin(.*)$ index.php?url=$1&app=Backend [QSA,L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+# Authorization  header
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
