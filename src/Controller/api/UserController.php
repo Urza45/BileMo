@@ -14,6 +14,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Annotations as OA;
 
 class UserController extends AbstractController
 {
@@ -22,7 +25,20 @@ class UserController extends AbstractController
      * Return list of users in a json response
      * 
      * @Route("/api/users", name="app_user_list", methods={"GET"})
-     *
+     * 
+     * @OA\Get(
+     *      description="List the characteristics of the specified client (Restricted to admin)",
+     *      tags={"User"},
+     *      @OA\Response(
+     *          response=200,
+     *          description="Returns the rewards of an user",
+     *          @OA\JsonContent(
+     *              type="array",
+     *              @OA\Items(ref=@Model(type=User::class, groups={"list_user"}))
+     *          )
+     *      )
+     * )
+     * 
      * @param  ClientRepository $repoClient
      * @param  Request $request
      * @return Response
@@ -40,10 +56,23 @@ class UserController extends AbstractController
     }
 
     /**
-     * ShowUserList
+     * ShowUser
      * Retourne un utilisateur associé à un client
      * 
      * @Route("/api/users/{id}", name="app_user_show", methods={"GET"})
+     * 
+     * @OA\Get(
+     *      description="List the characteristics of the specified client (Restricted to admin)",
+     *      tags={"User"},
+     *      @OA\Response(
+     *          response=200,
+     *          description="Returns the rewards of an user",
+     *          @OA\JsonContent(
+     *              type="array",
+     *              @OA\Items(ref=@Model(type=User::class, groups={"show_user"}))
+     *          )
+     *      )
+     * )
      *
      * @param  User $user
      * @param  Request $request
@@ -77,6 +106,19 @@ class UserController extends AbstractController
      * addUser
      * 
      * @Route("/api/users", name="app_user_add", methods={"POST"})
+     * 
+     * @OA\Post(
+     *      description="List the characteristics of the specified client (Restricted to admin)",
+     *      tags={"User"},
+     *      @OA\Response(
+     *          response=200,
+     *          description="Returns the rewards of an user",
+     *          @OA\JsonContent(
+     *              type="array",
+     *              @OA\Items(ref=@Model(type=User::class, groups={"show_user"}))
+     *          )
+     *      )
+     * )
      *
      * @param  ManagerRegistry $doctrine
      * @param  SerializerInterface $serializer
@@ -130,6 +172,15 @@ class UserController extends AbstractController
      * DeleteUser
      * 
      * @Route("/api/users/{id}", name="app_user_delete", methods={"DELETE"})
+     * 
+     * @OA\Delete(
+     *      description="List the characteristics of the specified client (Restricted to admin)",
+     *      tags={"User"},
+     *      @OA\Response(
+     *          response=200,
+     *          description="Returns the rewards of an user",
+     *      )
+     * )
      *
      * @param  User $user
      * @param  Request $request

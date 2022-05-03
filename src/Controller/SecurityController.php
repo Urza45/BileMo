@@ -8,43 +8,34 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Annotations as OA;
 
 class SecurityController extends AbstractController
 {
     /**
-     * @Route(name="api_login", path="/api/login_check")
+     * @Route(name="api_login", path="/api/login_check", methods={"POST"})
+     * 
+     * @OA\Post(
+     *      description="List the characteristics of the specified client",
+     *      tags={"Authentication"},
+     *      @OA\Response(
+     *          response=200,
+     *          description="Returns the rewards of an user",
+     *      )
+     * )
+     * 
      * @return JsonResponse
      */
     public function api_login(?Client $client): JsonResponse
     {
-        //$client = $this->getUser();
         $client = $this->getUser();
 
         return new JsonResponse([
             'email' => $client->getUserIdentifier(),
             'roles' => $client->getRoles(),
         ]);
-
-
-
-        // if (null === $client) {
-        //     return $this->json(
-        //         [
-        //             'client' => $client,
-        //             'message' => 'missing credentials',
-        //         ],
-        //         Response::HTTP_UNAUTHORIZED
-        //     );
-        // }
-
-        // $token = 'fbfdbfdbdfbfddfbfdbdfb';
-
-        // return $this->json([
-        //     'message' => 'Welcome to your new controller!',
-        //     'path' => 'src/Controller/ApiLoginController.php',
-        //     'user'  => $client->getUserIdentifier(),
-        //     'token' => $token,
-        // ]);
     }
 
     /**

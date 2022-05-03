@@ -13,6 +13,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Annotations as OA;
 
 /**
  * ProductController
@@ -24,6 +27,19 @@ class ProductController extends AbstractController
      * Return list of product in a json response
      * 
      * @Route("/api/products", name="api_product_list", methods={"GET"})
+     * 
+     * @OA\Get(
+     *      description="List the characteristics of the specified client (Restricted to admin)",
+     *      tags={"Product"},
+     *      @OA\Response(
+     *          response=200,
+     *          description="Returns the rewards of an user",
+     *          @OA\JsonContent(
+     *              type="array",
+     *              @OA\Items(ref=@Model(type=Product::class, groups={"list_product"}))
+     *          )
+     *      )
+     * )
      *
      * @param  ProductRepository $repoProduct
      * @return Response
@@ -45,6 +61,19 @@ class ProductController extends AbstractController
      * Return a product in a json response
      * 
      * @Route("/api/products/{id}", name="api_product_show", methods={"GET"}, requirements={"id"="\d+"})
+     * 
+     * @OA\Get(
+     *      description="List the characteristics of the specified client (Restricted to admin)",
+     *      tags={"Product"},
+     *      @OA\Response(
+     *          response=200,
+     *          description="Returns the rewards of an user",
+     *          @OA\JsonContent(
+     *              type="array",
+     *              @OA\Items(ref=@Model(type=Product::class, groups={"show_product"}))
+     *          )
+     *      )
+     * )
      * 
      * @param  Product $product
      * @return Response
@@ -69,6 +98,19 @@ class ProductController extends AbstractController
      * Add a product from a json request
      * 
      * @Route("/api/products", name="api_product_add", methods={"POST"})
+     * 
+     * @OA\Post(
+     *      description="List the characteristics of the specified client (Restricted to admin)",
+     *      tags={"Product"},
+     *      @OA\Response(
+     *          response=200,
+     *          description="Returns the rewards of an user",
+     *          @OA\JsonContent(
+     *              type="array",
+     *              @OA\Items(ref=@Model(type=Product::class, groups={"show_product"}))
+     *          )
+     *      )
+     * )
      *
      * @param  ManagerRegistry $doctrine
      * @param  SerializerInterface $serializer
@@ -76,47 +118,47 @@ class ProductController extends AbstractController
      * @param  ValidatorInterface $validator
      * @return Response
      */
-    public function addProduct(ManagerRegistry $doctrine, SerializerInterface $serializer, Request $request, ValidatorInterface $validator): Response
-    {
-        $data = $request->getContent();
-        $data2 = json_decode($data, true);
-        //dd((float) $data2['price']);
-        $data2['price'] = (float) $data2['price'];
+    //     public function addProduct(ManagerRegistry $doctrine, SerializerInterface $serializer, Request $request, ValidatorInterface $validator): Response
+    //     {
+    //         $data = $request->getContent();
+    //         $data2 = json_decode($data, true);
+    //         //dd((float) $data2['price']);
+    //         $data2['price'] = (float) $data2['price'];
 
-        $data = json_encode($data2);
+    //         $data = json_encode($data2);
 
-        try {
-            $product = $serializer->deserialize($data, Product::class, 'json');
+    //         try {
+    //             $product = $serializer->deserialize($data, Product::class, 'json');
 
-            $errors = $validator->validate($product);
+    //             $errors = $validator->validate($product);
 
-            if (count($errors) > 0) {
-                return $this->json($errors, Response::HTTP_BAD_REQUEST);
-            }
+    //             if (count($errors) > 0) {
+    //                 return $this->json($errors, Response::HTTP_BAD_REQUEST);
+    //             }
 
-            $manager = $doctrine->getManager();
-            $manager->persist($product);
-            $manager->flush();
+    //             $manager = $doctrine->getManager();
+    //             $manager->persist($product);
+    //             $manager->flush();
 
-            return $this->json(
-                $product,
-                Response::HTTP_CREATED,
-                [],
-                ['groups' => 'show_product']
-            );
-        } catch (NotEncodableValueException $e) {
-            return $this->json(
-                [
-                    'status' => Response::HTTP_BAD_REQUEST,
-                    'message' => $e->getMessage()
-                ],
-                Response::HTTP_BAD_REQUEST
-            );
-        } //catch (NotNormalizableValueException $e) {
-        //     return $this->json([
-        //         'status' => Response::HTTP_BAD_REQUEST,
-        //         'message' => 'Erreur de type de données' //$e->getMessage(),
-        //     ], Response::HTTP_BAD_REQUEST);
-        // }
-    }
+    //             return $this->json(
+    //                 $product,
+    //                 Response::HTTP_CREATED,
+    //                 [],
+    //                 ['groups' => 'show_product']
+    //             );
+    //         } catch (NotEncodableValueException $e) {
+    //             return $this->json(
+    //                 [
+    //                     'status' => Response::HTTP_BAD_REQUEST,
+    //                     'message' => $e->getMessage()
+    //                 ],
+    //                 Response::HTTP_BAD_REQUEST
+    //             );
+    //         } //catch (NotNormalizableValueException $e) {
+    //         //     return $this->json([
+    //         //         'status' => Response::HTTP_BAD_REQUEST,
+    //         //         'message' => 'Erreur de type de données' //$e->getMessage(),
+    //         //     ], Response::HTTP_BAD_REQUEST);
+    //         // }
+    //     }
 }
