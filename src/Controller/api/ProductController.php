@@ -29,14 +29,50 @@ class ProductController extends AbstractController
      * @Route("/api/products", name="api_product_list", methods={"GET"})
      * 
      * @OA\Get(
-     *      description="List the characteristics of the specified client (Restricted to admin)",
+     *      description="List of products",
      *      tags={"Product"},
+     *      @OA\Parameter(
+     *          name="page",
+     *          in="query",
+     *          required=false,
+     *          description="Current page of product list.",
+     *          @OA\Schema(type="string"),
+     *      ),
+     *      @OA\Parameter(
+     *          name="limit",
+     *          in="query",
+     *          required=false,
+     *          description="Maximum number of products per page.",
+     *          @OA\Schema(type="integer"),
+     *      ),
      *      @OA\Response(
      *          response=200,
-     *          description="Returns the rewards of an user",
+     *          description="Returns the list of products",
      *          @OA\JsonContent(
      *              type="array",
-     *              @OA\Items(ref=@Model(type=Product::class, groups={"list_product"}))
+     *              @OA\Items(
+     *                  type="object",
+     *                  @OA\Property(property="code", type="integer", example=200),
+     *                  @OA\Property(property="message", type="string", example="OK"),
+     *                  @OA\Property(
+     *                      property="products", 
+     *                      type="array",
+     *                      @OA\Items(ref=@Model(type=Product::class, groups={"list_product"})) 
+     *                  ),
+     *              ),
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Return problems with parameters (Expired token, no token).",
+     *          @OA\JsonContent(
+     *              type="array",
+     *              @OA\Items(
+     *                  type="object",
+     *                  @OA\Property(property="code", type="integer"),
+     *                  @OA\Property(property="message", type="string"),
+     *                  example={"code": 401, "message": "JWT Token not found"},
+     *              )
      *          )
      *      )
      * )
@@ -44,16 +80,40 @@ class ProductController extends AbstractController
      * @param  ProductRepository $repoProduct
      * @return Response
      */
-    public function showProductsList(ProductRepository $repoProduct): Response
+    public function showProductsList(ProductRepository $repoProduct, Request $request): Response
     {
-        // Récupérer la pagination
+        if ($request->query->get('page') !== null) {
+            $limit = 10;
+            if ($request->query->get('limit') !== null) {
+                $limit = $request->query->get('limit');
+            }
+            $json = $this->json(
+                $repoProduct->findBy(
+                    [],
+                    ['id' => 'ASC'],
+                    $limit,
+                    $request->query->get('page') * $limit
+                ),
+                Response::HTTP_OK,
+                [],
+                ['groups' => 'list_product']
+            );
+        } else {
+            $json = $this->json(
+                $repoProduct->findAll(),
+                Response::HTTP_OK,
+                [],
+                ['groups' => 'list_product']
+            );
+        }
 
-        return $this->json(
-            $repoProduct->findAll(),
-            Response::HTTP_OK,
-            [],
-            ['groups' => 'list_product']
-        );
+        $jsonToArray = [
+            "code" => 200,
+            "message" => "OK",
+            "products" => json_decode($json->getContent(), true)
+        ];
+
+        return $this->json($jsonToArray, Response::HTTP_OK);
     }
 
     /**
@@ -63,14 +123,52 @@ class ProductController extends AbstractController
      * @Route("/api/products/{id}", name="api_product_show", methods={"GET"}, requirements={"id"="\d+"})
      * 
      * @OA\Get(
-     *      description="List the characteristics of the specified client (Restricted to admin)",
+     *      description="List the characteristics of the specified product.",
      *      tags={"Product"},
+     *      @OA\Parameter(
+     *          name="id",
+     *          required=true,
+     *          in="path",
+     *          description="The product unique identifier.",
+     *          @OA\Schema(type="integer"),
+     *      ),
      *      @OA\Response(
      *          response=200,
-     *          description="Returns the rewards of an user",
+     *          description="Returns informations of a specific product",
      *          @OA\JsonContent(
      *              type="array",
-     *              @OA\Items(ref=@Model(type=Product::class, groups={"show_product"}))
+     *              @OA\Items(
+     *                  type="object",
+     *                  @OA\Property(property="code", type="integer", example=200),
+     *                  @OA\Property(property="message", type="string", example="OK"),
+     *                  @OA\Property(property="product", type="object", ref=@Model(type=Product::class, groups={"show_product"}) ),
+     *              ),
+     *          ),
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Return problems with parameters (Expired token, no token).",
+     *          @OA\JsonContent(
+     *              type="array",
+     *              @OA\Items(
+     *                  type="object",
+     *                  @OA\Property(property="code", type="integer"),
+     *                  @OA\Property(property="message", type="string"),
+     *                  example={"code": 401, "message": "JWT Token not found"},
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=404,
+     *          description="The desired product was not found.",
+     *          @OA\JsonContent(
+     *              type="array",
+     *              @OA\Items(
+     *                  type="object",
+     *                  @OA\Property(property="code", type="integer"),
+     *                  @OA\Property(property="message", type="string"),
+     *                  example={"code": 404, "message": "Le produit recherché n'a pas été trouvé"},
+     *              )
      *          )
      *      )
      * )
@@ -81,12 +179,24 @@ class ProductController extends AbstractController
     public function showProduct(Product $product = null): Response
     {
         if ($product) {
-            return $this->json($product, Response::HTTP_OK, [], ['groups' => 'show_product']);
+            $json = $this->json(
+                $product,
+                Response::HTTP_OK,
+                [],
+                ['groups' => 'show_product']
+            );
+            $jsonToArray = [
+                "code" => 200,
+                "message" => "OK",
+                "product" => json_decode($json->getContent(), true)
+            ];
+
+            return $this->json($jsonToArray, Response::HTTP_OK);
         }
 
         return $this->json(
             [
-                'status' => Response::HTTP_NOT_FOUND,
+                'code' => Response::HTTP_NOT_FOUND,
                 'message' => 'Le produit recherché n\'a pas été trouvé'
             ],
             Response::HTTP_NOT_FOUND

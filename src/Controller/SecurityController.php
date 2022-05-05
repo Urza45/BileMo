@@ -18,11 +18,39 @@ class SecurityController extends AbstractController
      * @Route(name="api_login", path="/api/login_check", methods={"POST"})
      * 
      * @OA\Post(
-     *      description="List the characteristics of the specified client",
+     *      description="Return a valid token",
      *      tags={"Authentication"},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="username", type="string", example="martin@email.com"),
+     *              @OA\Property(property="password", type="string", example="B123_456T"),
+     *          )
+     *      ),
      *      @OA\Response(
      *          response=200,
-     *          description="Returns the rewards of an user",
+     *          description="Return a valid token.",
+     *          @OA\JsonContent(
+     *              type="array",
+     *              @OA\Items(
+     *                  type="object",
+     *                  @OA\Property(property="token", type="string"),
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Invalid credentials.",
+     *          @OA\JsonContent(
+     *              type="array",
+     *              @OA\Items(
+     *                  type="object",
+     *                  @OA\Property(property="code", type="integer"),
+     *                  @OA\Property(property="message", type="string"),
+     *                  example={"code": 401, "message": "Invalid credentials."},
+     *              )
+     *          )
      *      )
      * )
      * 
