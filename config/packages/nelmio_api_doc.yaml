@@ -1,0 +1,36 @@
+nelmio_api_doc:
+    documentation:
+        servers:
+          - url: https://127.0.0.1:8000
+            description: API over HTTPS
+        info:
+            title: Bilemo
+            description: This is an awesome app!
+            version: 1.0.0
+        tags:
+          - name: Client
+            description: les clients
+          - name: User
+            description: Les utilisateurs liés à un client
+          - name: Product
+            description: Les produits
+          - name: Authentication
+            description: Récupération du token
+
+        components:
+            securitySchemes:
+                Bearer:
+                    type: http
+                    scheme: bearer
+                    bearerFormat: JWT
+        security:
+            - Bearer: []
+    areas: # to filter documented areas
+        default:
+            path_patterns:
+            - ^/api/users(?!/doc$) # Accepts routes under /api except /api/doc
+            - ^/api/products
+            # - ^/api/clients
+            - ^/api/login_check
+            - ^/api/doc.json
+

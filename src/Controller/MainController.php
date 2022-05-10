@@ -40,8 +40,8 @@ class MainController extends AbstractController
     {
         return $this->json(
             [
-                $exception->getStatusCode(),
-                HttpCode::getHttpMessage($exception->getStatusCode()),
+                "code" => $exception->getStatusCode(),
+                "message" => HttpCode::getHttpMessage($exception->getStatusCode()),
                 $exception->getMessage()
             ],
             $exception->getStatusCode()
