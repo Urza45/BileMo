@@ -3,8 +3,11 @@
 namespace App\Controller\Api;
 
 use App\Entity\Product;
+use OpenApi\Annotations as OA;
 use App\Repository\ProductRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -24,20 +27,75 @@ class ProductController extends AbstractController
      * Return list of product in a json response
      * 
      * @Route("/api/products", name="api_product_list", methods={"GET"})
+     * @OA\Get(
+     *      description="List of products",
+     *      tags={"Product"},
+     *      @OA\Parameter(ref="#/components/parameters/page"),
+     *      @OA\Parameter(ref="#/components/parameters/limit"),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Returns the list of products",
+     *          @OA\JsonContent(
+     *              type="array",
+     *              @OA\Items(
+     *                  type="object",
+     *                  @OA\Property(property="code", type="integer", example=200),
+     *                  @OA\Property(property="message", type="string", example="OK"),
+     *                  @OA\Property(
+     *                      property="products", 
+     *                      type="array",
+     *                      @OA\Items(ref=@Model(type=Product::class, groups={"list_product"})) 
+     *                  ),
+     *              ),
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          ref="#/components/responses/401"
+     *      )
+     * )
      *
      * @param  ProductRepository $repoProduct
      * @return Response
      */
-    public function showProductsList(ProductRepository $repoProduct): Response
+    public function showProductsList(ProductRepository $repoProduct, Request $request): Response
     {
-        // Récupérer la pagination
+        
 
-        return $this->json(
-            $repoProduct->findAll(),
-            Response::HTTP_OK,
-            [],
-            ['groups' => 'list_product']
-        );
+
+        if (($request->query->get('page') !== null)) {
+
+            $limit = 10;
+            if ($request->query->get('limit') !== null) {
+                $limit = $request->query->get('limit');
+            }
+            $json = $this->json(
+                $repoProduct->findBy(
+                    [],
+                    ['id' => 'ASC'],
+                    $limit,
+                    $request->query->get('page') * $limit
+                ),
+                Response::HTTP_OK,
+                [],
+                ['groups' => 'list_product']
+            );
+        } else {
+            $json = $this->json(
+                $repoProduct->findAll(),
+                Response::HTTP_OK,
+                [],
+                ['groups' => 'list_product']
+            );
+        }
+
+        $jsonToArray = [
+            "code" => 200,
+            "message" => "OK",
+            "products" => json_decode($json->getContent(), true)
+        ];
+
+        return $this->json($jsonToArray, Response::HTTP_OK);
     }
 
     /**
@@ -46,77 +104,61 @@ class ProductController extends AbstractController
      * 
      * @Route("/api/products/{id}", name="api_product_show", methods={"GET"}, requirements={"id"="\d+"})
      * 
+     * @OA\Get(
+     *      path="/api/products/{id}",
+     *      description="List the characteristics of the specified product.",
+     *      tags={"Product"},
+     *      @OA\Parameter(ref="#/components/parameters/id"),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Returns informations of a specific product",
+     *          @OA\JsonContent(
+     *              type="array",
+     *              @OA\Items(
+     *                  type="object",
+     *                  @OA\Property(property="code", type="integer", example=200),
+     *                  @OA\Property(property="message", type="string", example="OK"),
+     *                  @OA\Property(property="product", type="object", ref=@Model(type=Product::class, groups={"show_product"}) ),
+     *              ),
+     *          ),
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          ref="#/components/responses/401"
+     *      ),
+     *      @OA\Response(
+     *          response=404,
+     *          ref="#/components/responses/404"
+     *      ),
+     * )
+     * 
      * @param  Product $product
      * @return Response
      */
     public function showProduct(Product $product = null): Response
     {
         if ($product) {
-            return $this->json($product, Response::HTTP_OK, [], ['groups' => 'show_product']);
+            $json = $this->json(
+                $product,
+                Response::HTTP_OK,
+                [],
+                ['groups' => 'show_product']
+            );
+            $jsonToArray = [
+                "code" => 200,
+                "message" => "OK",
+                "product" => json_decode($json->getContent(), true)
+            ];
+
+            return $this->json($jsonToArray, Response::HTTP_OK);
         }
 
         return $this->json(
             [
-                'status' => Response::HTTP_NOT_FOUND,
-                'message' => 'Le produit recherché n\'a pas été trouvé'
+                'code' => Response::HTTP_NOT_FOUND,
+                'message' => 'The desired resource was not found'
             ],
             Response::HTTP_NOT_FOUND
         );
-    }
-
-    /**
-     * AddProduct
-     * Add a product from a json request
-     * 
-     * @Route("/api/products", name="api_product_add", methods={"POST"})
-     *
-     * @param  ManagerRegistry $doctrine
-     * @param  SerializerInterface $serializer
-     * @param  Request $request
-     * @param  ValidatorInterface $validator
-     * @return Response
-     */
-    public function addProduct(ManagerRegistry $doctrine, SerializerInterface $serializer, Request $request, ValidatorInterface $validator): Response
-    {
-        $data = $request->getContent();
-        $data2 = json_decode($data, true);
-        //dd((float) $data2['price']);
-        $data2['price'] = (float) $data2['price'];
-
-        $data = json_encode($data2);
-
-        try {
-            $product = $serializer->deserialize($data, Product::class, 'json');
-
-            $errors = $validator->validate($product);
-
-            if (count($errors) > 0) {
-                return $this->json($errors, Response::HTTP_BAD_REQUEST);
-            }
-
-            $manager = $doctrine->getManager();
-            $manager->persist($product);
-            $manager->flush();
-
-            return $this->json(
-                $product,
-                Response::HTTP_CREATED,
-                [],
-                ['groups' => 'show_product']
-            );
-        } catch (NotEncodableValueException $e) {
-            return $this->json(
-                [
-                    'status' => Response::HTTP_BAD_REQUEST,
-                    'message' => $e->getMessage()
-                ],
-                Response::HTTP_BAD_REQUEST
-            );
-        } //catch (NotNormalizableValueException $e) {
-        //     return $this->json([
-        //         'status' => Response::HTTP_BAD_REQUEST,
-        //         'message' => 'Erreur de type de données' //$e->getMessage(),
-        //     ], Response::HTTP_BAD_REQUEST);
-        // }
     }
 }

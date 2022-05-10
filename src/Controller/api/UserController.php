@@ -14,6 +14,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Annotations as OA;
 
 class UserController extends AbstractController
 {
@@ -22,7 +25,35 @@ class UserController extends AbstractController
      * Return list of users in a json response
      * 
      * @Route("/api/users", name="app_user_list", methods={"GET"})
-     *
+     * 
+     * @OA\Get(
+     *      description="Returns the list of users associated with a client",
+     *      tags={"User"},
+     *      @OA\Parameter(ref="#/components/parameters/page"),
+     *      @OA\Parameter(ref="#/components/parameters/limit"),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Returns the list of users",
+     *          @OA\JsonContent(
+     *              type="array",
+     *              @OA\Items(
+     *                  type="object",
+     *                  @OA\Property(property="code", type="integer", example=200),
+     *                  @OA\Property(property="message", type="string", example="OK"),
+     *                  @OA\Property(
+     *                      property="users", 
+     *                      type="array",
+     *                      @OA\Items(ref=@Model(type=User::class, groups={"list_user"})) 
+     *                  ),
+     *              ),
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          ref="#/components/responses/401"
+     *      )
+     * )
+     * 
      * @param  ClientRepository $repoClient
      * @param  Request $request
      * @return Response
@@ -31,19 +62,63 @@ class UserController extends AbstractController
     {
         $client = $repoClient->findOneBy(['id' => $this->getUser()->getId()]);
 
-        return $this->json(
+        $json = $this->json(
             $client->getUsers(),
             Response::HTTP_OK,
             [],
             ['groups' => 'list_user']
         );
+
+        $jsonToArray = [
+            "code" => 200,
+            "message" => "OK",
+            "users" => json_decode($json->getContent(), true)
+        ];
+
+        return $this->json($jsonToArray, Response::HTTP_OK);
     }
 
     /**
-     * ShowUserList
-     * Retourne un utilisateur associé à un client
+     * ShowUser
+     * Returns a user associated with a client
      * 
      * @Route("/api/users/{id}", name="app_user_show", methods={"GET"})
+     * 
+     * @OA\Get(
+     *      path="/api/users/{id}",
+     *      operationId="showUser",
+     *      description="List the characteristics of a specified user",
+     *      tags={"User"},
+     *      @OA\Parameter(
+     *          name="id",
+     *          ref="#/components/parameters/id"
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Returns the characteristics of a specified user",
+     *          @OA\JsonContent(
+     *              type="array",
+     *              @OA\Items(
+     *                  type="object",
+     *                  @OA\Property(property="code", type="integer", example=200),
+     *                  @OA\Property(property="message", type="string", example="OK"),
+     *                  @OA\Property(property="user", type="object", ref=@Model(type=User::class, groups={"show_user"}) ),
+     *              ),
+     *          ),
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          ref="#/components/responses/401"
+     *      ),
+     *      @OA\Response(
+     *          response=403,
+     *          ref="#/components/responses/403"
+     *      ),
+     *      @OA\Response(
+     *          response=404,
+     *          ref="#/components/responses/404"
+     *      ),   
+     * )
      *
      * @param  User $user
      * @param  Request $request
@@ -55,19 +130,35 @@ class UserController extends AbstractController
             if ($user->getClient()->getId() != $this->getUser()->getId()) {
                 return $this->json(
                     [
-                        'status' => Response::HTTP_FORBIDDEN,
-                        'message' => 'Vous n\'avez pas accès aux informations de cet utilisateur'
+                        'code' => Response::HTTP_FORBIDDEN,
+                        'message' => 'The desired resource is not authorized.'
                     ],
                     Response::HTTP_FORBIDDEN
                 );
             }
-            return $this->json($user, Response::HTTP_OK, [], ['groups' => 'show_user']);
+
+            $json = $this->json(
+                $user,
+                Response::HTTP_OK,
+                [],
+                ['groups' => 'show_user']
+            );
+
+            $jsonToArray = [
+                "code" => 200,
+                "message" => "OK",
+                "users" => json_decode($json->getContent(), true)
+            ];
+
+            return $this->json($jsonToArray, Response::HTTP_OK);
+
+            // return $this->json($user, Response::HTTP_OK, [], ['groups' => 'show_user']);
         }
 
         return $this->json(
             [
-                'status' => Response::HTTP_NOT_FOUND,
-                'message' => 'L\'utilisateur recherché n\'a pas été trouvé'
+                'code' => Response::HTTP_NOT_FOUND,
+                'message' => 'The desired resource was not found'
             ],
             Response::HTTP_NOT_FOUND
         );
@@ -77,32 +168,133 @@ class UserController extends AbstractController
      * addUser
      * 
      * @Route("/api/users", name="app_user_add", methods={"POST"})
+     * 
+     * @OA\Post(
+     *      description="Allow an authenticated client to create a new user",
+     *      tags={"User"},
+     *      operationId="addUser",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="firstName", type="string", example="John"),
+     *              @OA\Property(property="lastName", type="string", example="Doe"),
+     *              @OA\Property(property="email", type="string", example="doe.martin@email.com"),
+     *              @OA\Property(property="address", type="string", example="13 rue du Bois Blanc"),
+     *              @OA\Property(property="postalCode", type="string", example="41000"),
+     *              @OA\Property(property="city", type="string", example="Blois"),
+     *              
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=201,
+     *          description="Returns informations of the new user",
+     *          @OA\JsonContent(
+     *              type="array",            
+     *              @OA\Items(
+     *                  type="object",
+     *                  @OA\Property(property="code", type="integer", example=201),
+     *                  @OA\Property(property="message", type="string", example="Created."),
+     *                  @OA\Property(property="user", type="object", ref=@Model(type=user::class, groups={"show_user","list_user"}) ),
+     *              ),
+     *          ),
+     *          @OA\Link(
+     *              link="ShowUser",
+     *              description="GET /api/users/{id}, <br/> Show user's details",
+     *              operationId="showUser",
+     *              @OA\Parameter(
+     *                  name="id",
+     *                  ref="#/components/parameters/id"
+     *              ),
+     *          ),
+     *          @OA\Link(
+     *              link="DeleteUser",
+     *              description="DELETE /api/users/{id}, <br/> Delete a user",
+     *              operationId="deleteId",
+     *              @OA\Parameter(
+     *                  name="id",
+     *                  ref="#/components/parameters/id"
+     *              ),
+     *          ),
+     *      ),
+     *      @OA\Response(
+     *          response=400,
+     *          ref="#/components/responses/400"
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          ref="#/components/responses/401"
+     *      ),
+     *       @OA\Response(
+     *          response=409,
+     *          ref="#/components/responses/409"
+     *      ),
+     *      
+     * )
      *
      * @param  ManagerRegistry $doctrine
      * @param  SerializerInterface $serializer
      * @param  Request $request
      * @param  ValidatorInterface $validator
      * @param  ClientRepository $repoClient
+     * @param  UserRepository $repoUSer
      * @return Response
      */
-    public function addUser(ManagerRegistry $doctrine, SerializerInterface $serializer, ValidatorInterface $validator, ClientRepository $repoClient, Request $request): Response
-    {
+    public function addUser(
+        ManagerRegistry $doctrine,
+        SerializerInterface $serializer,
+        ValidatorInterface $validator,
+        ClientRepository $repoClient,
+        Request $request,
+        UserRepository $repoUser
+    ): Response {
         $client = $repoClient->findOneBy(['id' => $request->get('index')]);
         $data = $request->getContent();
 
+        // $user = $repoUser->findOneBy( ['email' => $data->get );
+
         try {
+            // Verification of existing user
             $user = $serializer->deserialize($data, User::class, 'json');
+
+            if ($repoUser->findOneBy(['email' => $user->getEmail()])) {
+                $jsonToArray = [
+                    "code" => 409,
+                    "message" => "Duplicate resource detected.",
+                ];
+                return $this->json($jsonToArray, Response::HTTP_CONFLICT);
+            }
 
             $errors = $validator->validate($user);
 
             if (count($errors) > 0) {
-                return $this->json($errors, Response::HTTP_BAD_REQUEST);
+                $jsonToArray = [
+                    "code" => 400,
+                    "message" => "Bad request.",
+                ];
+
+                return $this->json($jsonToArray, Response::HTTP_BAD_REQUEST);
             }
 
             $user->setClient($client);
             $manager = $doctrine->getManager();
             $manager->persist($user);
             $manager->flush();
+
+            $json = $this->json(
+                $user,
+                Response::HTTP_CREATED,
+                [],
+                ['groups' => ['show_user', 'list_user']]
+            );
+
+            $jsonToArray = [
+                "code" => 201,
+                "message" => "Created.",
+                "user" => json_decode($json->getContent(), true)
+            ];
+
+            return $this->json($jsonToArray, Response::HTTP_CREATED);
 
             return $this->json(
                 $user,
@@ -113,14 +305,14 @@ class UserController extends AbstractController
         } catch (NotEncodableValueException $e) {
             return $this->json(
                 [
-                    'status' => Response::HTTP_BAD_REQUEST,
+                    'code' => Response::HTTP_BAD_REQUEST,
                     'message' => $e->getMessage()
                 ],
                 Response::HTTP_BAD_REQUEST
             );
         } catch (NotNormalizableValueException $e) {
             return $this->json([
-                'status' => Response::HTTP_BAD_REQUEST,
+                'code' => Response::HTTP_BAD_REQUEST,
                 'message' => $e->getMessage(),
             ], Response::HTTP_BAD_REQUEST);
         }
@@ -130,6 +322,29 @@ class UserController extends AbstractController
      * DeleteUser
      * 
      * @Route("/api/users/{id}", name="app_user_delete", methods={"DELETE"})
+     * 
+     * @OA\Delete(
+     *      description="Delete the targeted user",
+     *      tags={"User"},
+     *      operationId="deleteId",
+     *      @OA\Parameter(ref="#/components/parameters/id"),
+     *      @OA\Response(
+     *          response=204,
+     *          description="Delete the targeted user",
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          ref="#/components/responses/401"
+     *      ),
+     *      @OA\Response(
+     *          response=403,
+     *          ref="#/components/responses/403"
+     *      ),
+     *      @OA\Response(
+     *          response=404,
+     *          ref="#/components/responses/404"
+     *      ) 
+     * )
      *
      * @param  User $user
      * @param  Request $request
@@ -142,8 +357,8 @@ class UserController extends AbstractController
             if ($user->getClient()->getId() != $this->getUser()->getId()) {
                 return $this->json(
                     [
-                        'status' => Response::HTTP_FORBIDDEN,
-                        'message' => 'Vous n\avez pas accès à cet utilisateur'
+                        'code' => Response::HTTP_FORBIDDEN,
+                        'message' => 'The desired resource is not authorized'
                     ],
                     Response::HTTP_FORBIDDEN
                 );
@@ -152,17 +367,16 @@ class UserController extends AbstractController
 
             return $this->json(
                 [
-                    'Status' => Response::HTTP_OK,
-                    'message' => 'L\'utilisateur a bien été supprimé.'
+                    'code' => Response::HTTP_NO_CONTENT,
                 ],
-                Response::HTTP_OK
+                Response::HTTP_NO_CONTENT
             );
         }
 
         return $this->json(
             [
-                'status' => Response::HTTP_NOT_FOUND,
-                'message' => 'L\'utilisateur recherché n\'a pas été trouvé'
+                'code' => Response::HTTP_NOT_FOUND,
+                'message' => 'The desired resource was not found.'
             ],
             Response::HTTP_NOT_FOUND
         );
