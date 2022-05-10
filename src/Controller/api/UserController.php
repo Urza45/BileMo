@@ -29,6 +29,8 @@ class UserController extends AbstractController
      * @OA\Get(
      *      description="Returns the list of users associated with a client",
      *      tags={"User"},
+     *      @OA\Parameter(ref="#/components/parameters/page"),
+     *      @OA\Parameter(ref="#/components/parameters/limit"),
      *      @OA\Response(
      *          response=200,
      *          description="Returns the list of users",
@@ -48,16 +50,7 @@ class UserController extends AbstractController
      *      ),
      *      @OA\Response(
      *          response=401,
-     *          description="Return problems with parameters (Expired token, no token).",
-     *          @OA\JsonContent(
-     *              type="array",
-     *              @OA\Items(
-     *                  type="object",
-     *                  @OA\Property(property="code", type="integer"),
-     *                  @OA\Property(property="message", type="string"),
-     *                  example={"code": 401, "message": "JWT Token not found"},
-     *              )
-     *          )
+     *          ref="#/components/responses/401"
      *      )
      * )
      * 
@@ -87,16 +80,22 @@ class UserController extends AbstractController
 
     /**
      * ShowUser
-     * Retourne un utilisateur associé à un client
+     * Returns a user associated with a client
      * 
      * @Route("/api/users/{id}", name="app_user_show", methods={"GET"})
      * 
      * @OA\Get(
-     *      description="List the characteristics of the specified client (Restricted to admin)",
+     *      path="/api/users/{id}",
+     *      operationId="showUser",
+     *      description="List the characteristics of a specified user",
      *      tags={"User"},
+     *      @OA\Parameter(
+     *          name="id",
+     *          ref="#/components/parameters/id"
+     *      ),
      *      @OA\Response(
      *          response=200,
-     *          description="Returns the rewards of an user",
+     *          description="Returns the characteristics of a specified user",
      *          @OA\JsonContent(
      *              type="array",
      *              @OA\Items(
@@ -105,47 +104,20 @@ class UserController extends AbstractController
      *                  @OA\Property(property="message", type="string", example="OK"),
      *                  @OA\Property(property="user", type="object", ref=@Model(type=User::class, groups={"show_user"}) ),
      *              ),
-     *          )
+     *          ),
      *      ),
      *      @OA\Response(
      *          response=401,
-     *          description="Return problems with parameters (Expired token, no token).",
-     *          @OA\JsonContent(
-     *              type="array",
-     *              @OA\Items(
-     *                  type="object",
-     *                  @OA\Property(property="code", type="integer"),
-     *                  @OA\Property(property="message", type="string"),
-     *                  example={"code": 401, "message": "JWT Token not found"},
-     *              )
-     *          )
+     *          ref="#/components/responses/401"
      *      ),
      *      @OA\Response(
      *          response=403,
-     *          description="The desired user is not authorized.",
-     *          @OA\JsonContent(
-     *              type="array",
-     *              @OA\Items(
-     *                  type="object",
-     *                  @OA\Property(property="code", type="integer"),
-     *                  @OA\Property(property="message", type="string"),
-     *                  example={"code": 403, "message": "Vous n'avez pas accès aux informations de cet utilisateur"},
-     *              )
-     *          )
+     *          ref="#/components/responses/403"
      *      ),
      *      @OA\Response(
      *          response=404,
-     *          description="The desired user was not found.",
-     *          @OA\JsonContent(
-     *              type="array",
-     *              @OA\Items(
-     *                  type="object",
-     *                  @OA\Property(property="code", type="integer"),
-     *                  @OA\Property(property="message", type="string"),
-     *                  example={"code": 404, "message": "L'utilisateur recherché n'a pas été trouvé"},
-     *              )
-     *          )
-     *      )
+     *          ref="#/components/responses/404"
+     *      ),   
      * )
      *
      * @param  User $user
@@ -159,18 +131,34 @@ class UserController extends AbstractController
                 return $this->json(
                     [
                         'code' => Response::HTTP_FORBIDDEN,
-                        'message' => 'Vous n\'avez pas accès aux informations de cet utilisateur'
+                        'message' => 'The desired resource is not authorized.'
                     ],
                     Response::HTTP_FORBIDDEN
                 );
             }
-            return $this->json($user, Response::HTTP_OK, [], ['groups' => 'show_user']);
+
+            $json = $this->json(
+                $user,
+                Response::HTTP_OK,
+                [],
+                ['groups' => 'show_user']
+            );
+
+            $jsonToArray = [
+                "code" => 200,
+                "message" => "OK",
+                "users" => json_decode($json->getContent(), true)
+            ];
+
+            return $this->json($jsonToArray, Response::HTTP_OK);
+
+            // return $this->json($user, Response::HTTP_OK, [], ['groups' => 'show_user']);
         }
 
         return $this->json(
             [
                 'code' => Response::HTTP_NOT_FOUND,
-                'message' => 'L\'utilisateur recherché n\'a pas été trouvé'
+                'message' => 'The desired resource was not found'
             ],
             Response::HTTP_NOT_FOUND
         );
@@ -184,6 +172,7 @@ class UserController extends AbstractController
      * @OA\Post(
      *      description="Allow an authenticated client to create a new user",
      *      tags={"User"},
+     *      operationId="addUser",
      *      @OA\RequestBody(
      *          required=true,
      *          @OA\JsonContent(
@@ -199,56 +188,48 @@ class UserController extends AbstractController
      *      ),
      *      @OA\Response(
      *          response=201,
-     *          description="Returns informations of the new user of an user",
+     *          description="Returns informations of the new user",
      *          @OA\JsonContent(
      *              type="array",            
      *              @OA\Items(
      *                  type="object",
      *                  @OA\Property(property="code", type="integer", example=201),
-     *                  @OA\Property(property="message", type="string", example="Utilisateur créé."),
-     *                  @OA\Property(property="user", type="object", ref=@Model(type=user::class, groups={"show_user"}) ),
+     *                  @OA\Property(property="message", type="string", example="Created."),
+     *                  @OA\Property(property="user", type="object", ref=@Model(type=user::class, groups={"show_user","list_user"}) ),
      *              ),
-     *          )
+     *          ),
+     *          @OA\Link(
+     *              link="ShowUser",
+     *              description="GET /api/users/{id}, <br/> Show user's details",
+     *              operationId="showUser",
+     *              @OA\Parameter(
+     *                  name="id",
+     *                  ref="#/components/parameters/id"
+     *              ),
+     *          ),
+     *          @OA\Link(
+     *              link="DeleteUser",
+     *              description="DELETE /api/users/{id}, <br/> Delete a user",
+     *              operationId="deleteId",
+     *              @OA\Parameter(
+     *                  name="id",
+     *                  ref="#/components/parameters/id"
+     *              ),
+     *          ),
      *      ),
      *      @OA\Response(
      *          response=400,
-     *          description="Return problems with a paramter.",
-     *          @OA\JsonContent(
-     *              type="array",
-     *              @OA\Items(
-     *                  type="object",
-     *                  @OA\Property(property="code", type="integer"),
-     *                  @OA\Property(property="message", type="string"),
-     *                  example={"code": 400, "message": "Erreur sur un champ de donnée."},
-     *              )
-     *          )
+     *          ref="#/components/responses/400"
      *      ),
      *      @OA\Response(
      *          response=401,
-     *          description="Return problems with parameters (Expired token, no token).",
-     *          @OA\JsonContent(
-     *              type="array",
-     *              @OA\Items(
-     *                  type="object",
-     *                  @OA\Property(property="code", type="integer"),
-     *                  @OA\Property(property="message", type="string"),
-     *                  example={"code": 401, "message": "JWT Token not found"},
-     *              )
-     *          )
+     *          ref="#/components/responses/401"
      *      ),
      *       @OA\Response(
      *          response=409,
-     *          description="Duplicate user detected.",
-     *          @OA\JsonContent(
-     *              type="array",
-     *              @OA\Items(
-     *                  type="object",
-     *                  @OA\Property(property="code", type="integer"),
-     *                  @OA\Property(property="message", type="string"),
-     *                  example={"code": 409, "message": "L'utilisateur est déjà associé à ce client."},
-     *              )
-     *          )
+     *          ref="#/components/responses/409"
      *      ),
+     *      
      * )
      *
      * @param  ManagerRegistry $doctrine
@@ -269,16 +250,17 @@ class UserController extends AbstractController
     ): Response {
         $client = $repoClient->findOneBy(['id' => $request->get('index')]);
         $data = $request->getContent();
-        // Verification of existing user
+
         // $user = $repoUser->findOneBy( ['email' => $data->get );
 
         try {
+            // Verification of existing user
             $user = $serializer->deserialize($data, User::class, 'json');
 
             if ($repoUser->findOneBy(['email' => $user->getEmail()])) {
                 $jsonToArray = [
                     "code" => 409,
-                    "message" => "L'utilisateur est déjà associé à ce client.",
+                    "message" => "Duplicate resource detected.",
                 ];
                 return $this->json($jsonToArray, Response::HTTP_CONFLICT);
             }
@@ -288,7 +270,7 @@ class UserController extends AbstractController
             if (count($errors) > 0) {
                 $jsonToArray = [
                     "code" => 400,
-                    "message" => "Erreur sur un champ de donnée.",
+                    "message" => "Bad request.",
                 ];
 
                 return $this->json($jsonToArray, Response::HTTP_BAD_REQUEST);
@@ -303,12 +285,12 @@ class UserController extends AbstractController
                 $user,
                 Response::HTTP_CREATED,
                 [],
-                ['groups' => 'show_user']
+                ['groups' => ['show_user', 'list_user']]
             );
 
             $jsonToArray = [
                 "code" => 201,
-                "message" => "Utilisateur créé.",
+                "message" => "Created.",
                 "user" => json_decode($json->getContent(), true)
             ];
 
@@ -344,57 +326,23 @@ class UserController extends AbstractController
      * @OA\Delete(
      *      description="Delete the targeted user",
      *      tags={"User"},
+     *      operationId="deleteId",
+     *      @OA\Parameter(ref="#/components/parameters/id"),
      *      @OA\Response(
-     *          response=200,
+     *          response=204,
      *          description="Delete the targeted user",
-     *          @OA\JsonContent(
-     *              type="array",
-     *              @OA\Items(
-     *                  type="object",
-     *                  @OA\Property(property="code", type="integer"),
-     *                  @OA\Property(property="message", type="string"),
-     *                  example={"code": 200, "message": "L'utilisateur a bien été supprimé."},
-     *              )
-     *          )
      *      ),
      *      @OA\Response(
      *          response=401,
-     *          description="Return problems with parameters (Expired token, no token).",
-     *          @OA\JsonContent(
-     *              type="array",
-     *              @OA\Items(
-     *                  type="object",
-     *                  @OA\Property(property="code", type="integer"),
-     *                  @OA\Property(property="message", type="string"),
-     *                  example={"code": 401, "message": "JWT Token not found"},
-     *              )
-     *          )
+     *          ref="#/components/responses/401"
      *      ),
      *      @OA\Response(
      *          response=403,
-     *          description="The desired user is not authorized.",
-     *          @OA\JsonContent(
-     *              type="array",
-     *              @OA\Items(
-     *                  type="object",
-     *                  @OA\Property(property="code", type="integer"),
-     *                  @OA\Property(property="message", type="string"),
-     *                  example={"code": 403, "message": "Vous n'avez pas accès aux informations de cet utilisateur"},
-     *              )
-     *          )
+     *          ref="#/components/responses/403"
      *      ),
      *      @OA\Response(
      *          response=404,
-     *          description="The desired user was not found.",
-     *          @OA\JsonContent(
-     *              type="array",
-     *              @OA\Items(
-     *                  type="object",
-     *                  @OA\Property(property="code", type="integer"),
-     *                  @OA\Property(property="message", type="string"),
-     *                  example={"code": 404, "message": "L'utilisateur recherché n'a pas été trouvé"},
-     *              )
-     *          )
+     *          ref="#/components/responses/404"
      *      ) 
      * )
      *
@@ -410,7 +358,7 @@ class UserController extends AbstractController
                 return $this->json(
                     [
                         'code' => Response::HTTP_FORBIDDEN,
-                        'message' => 'Vous n\avez pas accès à cet utilisateur'
+                        'message' => 'The desired resource is not authorized'
                     ],
                     Response::HTTP_FORBIDDEN
                 );
@@ -419,17 +367,16 @@ class UserController extends AbstractController
 
             return $this->json(
                 [
-                    'code' => Response::HTTP_OK,
-                    'message' => 'L\'utilisateur a bien été supprimé.'
+                    'code' => Response::HTTP_NO_CONTENT,
                 ],
-                Response::HTTP_OK
+                Response::HTTP_NO_CONTENT
             );
         }
 
         return $this->json(
             [
                 'code' => Response::HTTP_NOT_FOUND,
-                'message' => 'L\'utilisateur recherché n\'a pas été trouvé'
+                'message' => 'The desired resource was not found.'
             ],
             Response::HTTP_NOT_FOUND
         );

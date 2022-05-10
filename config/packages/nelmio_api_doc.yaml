@@ -1,36 +1,132 @@
 nelmio_api_doc:
-    documentation:
-        servers:
-          - url: https://127.0.0.1:8000
-            description: API over HTTPS
-        info:
-            title: Bilemo
-            description: This is an awesome app!
-            version: 1.0.0
-        tags:
-          - name: Client
-            description: les clients
-          - name: User
-            description: Les utilisateurs liés à un client
-          - name: Product
-            description: Les produits
-          - name: Authentication
-            description: Récupération du token
-
-        components:
-            securitySchemes:
-                Bearer:
-                    type: http
-                    scheme: bearer
-                    bearerFormat: JWT
-        security:
-            - Bearer: []
-    areas: # to filter documented areas
-        default:
-            path_patterns:
-            - ^/api/users(?!/doc$) # Accepts routes under /api except /api/doc
-            - ^/api/products
-            # - ^/api/clients
-            - ^/api/login_check
-            - ^/api/doc.json
-
+  documentation:
+    servers:
+      - url: https://127.0.0.1:8000
+        description: API over HTTPS
+    info:
+      title: Bilemo
+      description: This is an awesome app!
+      version: 1.0.0
+    tags:
+      - name: Client
+        description: les clients
+      - name: User
+        description: Les utilisateurs liés à un client
+      - name: Product
+        description: Les produits
+      - name: Authentication
+        description: Récupération du token
+    components:
+      securitySchemes:
+        Bearer:
+          type: http
+          scheme: bearer
+          bearerFormat: JWT
+      parameters:
+        id:
+          in: "path"
+          name: "id"
+          description: "Id of the selected resource"
+          required: true
+          schema:
+            type: integer
+        page:
+          in: "query"
+          name: "page"
+          description: "Current page of product list."
+          required: false
+          schema:
+            type: integer
+            example: 0
+        limit:
+          in: "query"
+          name: "limit"
+          description: "Maximum number of products per page."
+          required: false
+          schema:
+            type: integer
+            example: 5
+      responses:
+        400:
+          description: "Return problems with a parameter"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 400
+                  message:
+                    type: string
+                    example: "Bad request"
+        401:
+          description: "Return problems with parameters (Expired token, no token)"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 401
+                  message:
+                    type: string
+                    example: "JWT Token not found"
+        403:
+          description: "The desired resource is not authorized"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 403
+                  message:
+                    type: string
+                    example: "The desired resource is not authorized."
+        404:
+          description: "The desired resource was not found."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 404
+                  message:
+                    type: string
+                    example: "The desired resource was not found."
+        409:
+          description: "Duplicate resource detected"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 409
+                  message:
+                    type: string
+                    example: "Resource already exists."
+      links:
+        userShow:
+          operationId: showUser
+          parameters:
+            id: "$request.path#/id"
+    security:
+      - Bearer: []
+  areas: # to filter documented areas
+    default:
+      path_patterns:
+        #- ^/api(?!/doc$)
+        - ^/api/users(?!/doc$) # Accepts routes under /api except /api/doc
+        - ^/api/products
+        # - ^/api/clients
+        - ^/api/login_check
+        - ^/api/doc.json
+      #disable_default_routes: true
+  models:
