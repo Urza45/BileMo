@@ -46,7 +46,37 @@ class UserController extends AbstractController
      *                      @OA\Items(ref=@Model(type=User::class, groups={"list_user"})) 
      *                  ),
      *              ),
-     *          )
+     *          ),
+     *          @OA\Link(
+     *              link="ShowUser",
+     *              description="Show details of a user<br/>The <code>id</code> value returned in the response can be used as the id parameter in<br/><code>GET /api/users/{id}</code>.",
+     *              operationId="showUser",
+     *              parameters= {
+     *                  {
+     *                      "name": "id",
+     *                      "description": "User's id",
+     *                      "required": true,
+     *                      "type": "integer",
+     *                      "paramType": "path",
+     *                      "allowMultiple": false
+     *                  },
+     *              },
+     *          ),
+     *          @OA\Link(
+     *              link="DeleteUser",
+     *              description="Delete a user<br/>The <code>id</code> value returned in the response can be used as the id parameter in<br/><code>DELETE /api/users/{id}</code>",
+     *              operationId="deleteUser",
+     *              parameters= {
+     *                  {
+     *                      "name": "id",
+     *                      "description": "User's id",
+     *                      "required": true,
+     *                      "type": "integer",
+     *                      "paramType": "path",
+     *                      "allowMultiple": false
+     *                  },
+     *              },
+     *          ),
      *      ),
      *      @OA\Response(
      *          response=401,
@@ -200,21 +230,33 @@ class UserController extends AbstractController
      *          ),
      *          @OA\Link(
      *              link="ShowUser",
-     *              description="GET /api/users/{id}, <br/> Show user's details",
+     *              description="Show details of a user<br/>The <code>id</code> value returned in the response can be used as the id parameter in<br/><code>GET /api/users/{id}</code>.",
      *              operationId="showUser",
-     *              @OA\Parameter(
-     *                  name="id",
-     *                  ref="#/components/parameters/id"
-     *              ),
+     *              parameters= {
+     *                  {
+     *                      "name": "id",
+     *                      "description": "User's id",
+     *                      "required": true,
+     *                      "type": "integer",
+     *                      "paramType": "path",
+     *                      "allowMultiple": false
+     *                  },
+     *              },
      *          ),
      *          @OA\Link(
      *              link="DeleteUser",
-     *              description="DELETE /api/users/{id}, <br/> Delete a user",
-     *              operationId="deleteId",
-     *              @OA\Parameter(
-     *                  name="id",
-     *                  ref="#/components/parameters/id"
-     *              ),
+     *              description="Delete a user<br/>The <code>id</code> value returned in the response can be used as the id parameter in<br/><code>DELETE /api/users/{id}</code>",
+     *              operationId="deleteUser",
+     *              parameters= {
+     *                  {
+     *                      "name": "id",
+     *                      "description": "User's id",
+     *                      "required": true,
+     *                      "type": "integer",
+     *                      "paramType": "path",
+     *                      "allowMultiple": false
+     *                  }
+     *              },
      *          ),
      *      ),
      *      @OA\Response(
@@ -326,7 +368,7 @@ class UserController extends AbstractController
      * @OA\Delete(
      *      description="Delete the targeted user",
      *      tags={"User"},
-     *      operationId="deleteId",
+     *      operationId="deleteUser",
      *      @OA\Parameter(ref="#/components/parameters/id"),
      *      @OA\Response(
      *          response=204,

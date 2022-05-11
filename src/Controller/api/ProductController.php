@@ -47,7 +47,22 @@ class ProductController extends AbstractController
      *                      @OA\Items(ref=@Model(type=Product::class, groups={"list_product"})) 
      *                  ),
      *              ),
-     *          )
+     *          ),
+     *          @OA\Link(
+     *              link="ShowProduct",
+     *              description="Show details of a product<br/>The <code>id</code> value returned in the response can be used as the id parameter in<br/><code>GET /api/products/{id}</code>.",
+     *              operationId="showProduct",
+     *              parameters= {
+     *                  {
+     *                      "name": "id",
+     *                      "description": "Product's id",
+     *                      "required": true,
+     *                      "type": "integer",
+     *                      "paramType": "path",
+     *                      "allowMultiple": false
+     *                  }
+     *              },
+     *          ),
      *      ),
      *      @OA\Response(
      *          response=401,
@@ -60,7 +75,7 @@ class ProductController extends AbstractController
      */
     public function showProductsList(ProductRepository $repoProduct, Request $request): Response
     {
-        
+
 
 
         if (($request->query->get('page') !== null)) {
