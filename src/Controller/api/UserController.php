@@ -3,9 +3,13 @@
 namespace App\Controller\Api;
 
 use App\Entity\User;
+use OpenApi\Annotations as OA;
 use App\Repository\UserRepository;
+use App\Services\PaginationService;
 use App\Repository\ClientRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -14,9 +18,6 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
-use Nelmio\ApiDocBundle\Annotation\Model;
-use Nelmio\ApiDocBundle\Annotation\Security;
-use OpenApi\Annotations as OA;
 
 class UserController extends AbstractController
 {
@@ -85,11 +86,15 @@ class UserController extends AbstractController
      * )
      * 
      * @param  ClientRepository $repoClient
+     * @param  PaginationService $pagination
      * @param  Request $request
      * @return Response
      */
-    public function showUserList(ClientRepository $repoClient, Request $request): Response
-    {
+    public function showUserList(
+        PaginationService $pagination,
+        ClientRepository $repoClient,
+        Request $request
+    ): Response {
         $client = $repoClient->findOneBy(['id' => $this->getUser()->getId()]);
 
         $json = $this->json(
@@ -98,6 +103,23 @@ class UserController extends AbstractController
             [],
             ['groups' => 'list_user']
         );
+
+        if ($pagination->verifInteger($request->get('page'))) {
+            $page = $request->get('page');
+            $limit = 10;
+            if ($pagination->verifInteger($request->get('limit'))) {
+                $limit = $request->query->get('limit');
+            }
+
+            $array = (array) json_decode($json->getContent());
+
+            $json = $this->json(
+                array_slice($array, $page * $limit, $limit),
+                Response::HTTP_OK,
+                [],
+                []
+            );
+        }
 
         $jsonToArray = [
             "code" => 200,

@@ -5,6 +5,7 @@ namespace App\Controller\Api;
 use App\Entity\Product;
 use OpenApi\Annotations as OA;
 use App\Repository\ProductRepository;
+use App\Services\PaginationService;
 use Doctrine\Persistence\ManagerRegistry;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Nelmio\ApiDocBundle\Annotation\Security;
@@ -71,17 +72,26 @@ class ProductController extends AbstractController
      * )
      *
      * @param  ProductRepository $repoProduct
+     * @param  PaginationService $pagination
+     * @param  Request $request
      * @return Response
      */
-    public function showProductsList(ProductRepository $repoProduct, Request $request): Response
-    {
+    public function showProductsList(
+        PaginationService $pagination,
+        ProductRepository $repoProduct,
+        Request $request
+    ): Response {
+        $json = $this->json(
+            $repoProduct->findAll(),
+            Response::HTTP_OK,
+            [],
+            ['groups' => 'list_product']
+        );
 
-
-
-        if (($request->query->get('page') !== null)) {
-
+        if ($pagination->verifInteger($request->get('page'))) {
+            $page = $request->get('page');
             $limit = 10;
-            if ($request->query->get('limit') !== null) {
+            if ($pagination->verifInteger($request->get('limit'))) {
                 $limit = $request->query->get('limit');
             }
             $json = $this->json(
@@ -89,15 +99,8 @@ class ProductController extends AbstractController
                     [],
                     ['id' => 'ASC'],
                     $limit,
-                    $request->query->get('page') * $limit
+                    $page * $limit
                 ),
-                Response::HTTP_OK,
-                [],
-                ['groups' => 'list_product']
-            );
-        } else {
-            $json = $this->json(
-                $repoProduct->findAll(),
                 Response::HTTP_OK,
                 [],
                 ['groups' => 'list_product']
