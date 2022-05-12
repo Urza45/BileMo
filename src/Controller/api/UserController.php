@@ -292,8 +292,7 @@ class UserController extends AbstractController
      *       @OA\Response(
      *          response=409,
      *          ref="#/components/responses/409"
-     *      ),
-     *      
+     *      ),     
      * )
      *
      * @param  ManagerRegistry $doctrine
