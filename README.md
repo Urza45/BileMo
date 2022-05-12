@@ -18,12 +18,12 @@ The first customer has finally signed a partnership contract with BileMo! It's t
 
 After a dense meeting with the client, a certain amount of information was identified. It must be possible to:
 
-- Consult the list of BileMo products;
-- Consult the details of a BileMo product;
-- Consult the list of registered users linked to a client on the website;
-- Consult the details of a registered user linked to a client;
-- Add a new user linked to a customer;
-- Delete a user added by a customer.
+    - Consult the list of BileMo products;
+    - Consult the details of a BileMo product;
+    - Consult the list of registered users linked to a client on the website;
+    - Consult the details of a registered user linked to a client;
+    - Add a new user linked to a customer;
+    - Delete a user added by a customer.
 
 Only referenced clients can access the APIs. API clients must be authenticated via OAuth or JWT.
 
@@ -35,8 +35,8 @@ BileMo's first partner is very demanding: it requires that you expose your data 
 
 The present project was developed with:
 
-- PHP 7.4.9 (cli) (built: Aug  4 2020 11:52:41)
-- MySQL  5.7.31 Community Server (GPL)
+    - PHP 7.4.9 (cli) (built: Aug  4 2020 11:52:41)
+    - MySQL  5.7.31 Community Server (GPL)
 
 ## Installation
 
