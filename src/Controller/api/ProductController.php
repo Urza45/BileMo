@@ -5,17 +5,11 @@ namespace App\Controller\Api;
 use App\Entity\Product;
 use OpenApi\Annotations as OA;
 use App\Repository\ProductRepository;
-use Doctrine\Persistence\ManagerRegistry;
-use Nelmio\ApiDocBundle\Annotation\Model;
-use Nelmio\ApiDocBundle\Annotation\Security;
+use App\Services\PaginationService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Serializer\Exception\NotEncodableValueException;
-use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 
 /**
  * ProductController
@@ -47,7 +41,22 @@ class ProductController extends AbstractController
      *                      @OA\Items(ref=@Model(type=Product::class, groups={"list_product"})) 
      *                  ),
      *              ),
-     *          )
+     *          ),
+     *          @OA\Link(
+     *              link="ShowProduct",
+     *              description="Show details of a product<br/>The <code>id</code> value returned in the response can be used as the id parameter in<br/><code>GET /api/products/{id}</code>.",
+     *              operationId="showProduct",
+     *              parameters= {
+     *                  {
+     *                      "name": "id",
+     *                      "description": "Product's id",
+     *                      "required": true,
+     *                      "type": "integer",
+     *                      "paramType": "path",
+     *                      "allowMultiple": false
+     *                  }
+     *              },
+     *          ),
      *      ),
      *      @OA\Response(
      *          response=401,
@@ -56,33 +65,35 @@ class ProductController extends AbstractController
      * )
      *
      * @param  ProductRepository $repoProduct
+     * @param  PaginationService $pagination
+     * @param  Request $request
      * @return Response
      */
-    public function showProductsList(ProductRepository $repoProduct, Request $request): Response
-    {
-        
+    public function showProductsList(
+        PaginationService $pagination,
+        ProductRepository $repoProduct,
+        Request $request
+    ): Response {
+        $json = $this->json(
+            $repoProduct->findAll(),
+            Response::HTTP_OK,
+            [], // Empty header
+            ['groups' => 'list_product']
+        );
 
-
-        if (($request->query->get('page') !== null)) {
-
-            $limit = 10;
-            if ($request->query->get('limit') !== null) {
+        if ($pagination->verifInteger($request->get('page'))) {
+            $page = $request->get('page');
+            $limit = PaginationService::LIMIT_DEFAULT;
+            if ($pagination->verifInteger($request->get('limit'))) {
                 $limit = $request->query->get('limit');
             }
             $json = $this->json(
                 $repoProduct->findBy(
-                    [],
+                    [], // Empty header
                     ['id' => 'ASC'],
                     $limit,
-                    $request->query->get('page') * $limit
+                    $page * $limit
                 ),
-                Response::HTTP_OK,
-                [],
-                ['groups' => 'list_product']
-            );
-        } else {
-            $json = $this->json(
-                $repoProduct->findAll(),
                 Response::HTTP_OK,
                 [],
                 ['groups' => 'list_product']
@@ -141,7 +152,7 @@ class ProductController extends AbstractController
             $json = $this->json(
                 $product,
                 Response::HTTP_OK,
-                [],
+                [], // Empty header
                 ['groups' => 'show_product']
             );
             $jsonToArray = [

@@ -3,7 +3,9 @@
 namespace App\Controller\Api;
 
 use App\Entity\User;
+use OpenApi\Annotations as OA;
 use App\Repository\UserRepository;
+use App\Services\PaginationService;
 use App\Repository\ClientRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,9 +16,6 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
-use Nelmio\ApiDocBundle\Annotation\Model;
-use Nelmio\ApiDocBundle\Annotation\Security;
-use OpenApi\Annotations as OA;
 
 class UserController extends AbstractController
 {
@@ -46,7 +45,37 @@ class UserController extends AbstractController
      *                      @OA\Items(ref=@Model(type=User::class, groups={"list_user"})) 
      *                  ),
      *              ),
-     *          )
+     *          ),
+     *          @OA\Link(
+     *              link="ShowUser",
+     *              description="Show details of a user<br/>The <code>id</code> value returned in the response can be used as the id parameter in<br/><code>GET /api/users/{id}</code>.",
+     *              operationId="showUser",
+     *              parameters= {
+     *                  {
+     *                      "name": "id",
+     *                      "description": "User's id",
+     *                      "required": true,
+     *                      "type": "integer",
+     *                      "paramType": "path",
+     *                      "allowMultiple": false
+     *                  },
+     *              },
+     *          ),
+     *          @OA\Link(
+     *              link="DeleteUser",
+     *              description="Delete a user<br/>The <code>id</code> value returned in the response can be used as the id parameter in<br/><code>DELETE /api/users/{id}</code>",
+     *              operationId="deleteUser",
+     *              parameters= {
+     *                  {
+     *                      "name": "id",
+     *                      "description": "User's id",
+     *                      "required": true,
+     *                      "type": "integer",
+     *                      "paramType": "path",
+     *                      "allowMultiple": false
+     *                  },
+     *              },
+     *          ),
      *      ),
      *      @OA\Response(
      *          response=401,
@@ -55,19 +84,38 @@ class UserController extends AbstractController
      * )
      * 
      * @param  ClientRepository $repoClient
+     * @param  PaginationService $pagination
      * @param  Request $request
      * @return Response
      */
-    public function showUserList(ClientRepository $repoClient, Request $request): Response
-    {
+    public function showUserList(
+        PaginationService $pagination,
+        ClientRepository $repoClient,
+        Request $request
+    ): Response {
         $client = $repoClient->findOneBy(['id' => $this->getUser()->getId()]);
 
         $json = $this->json(
             $client->getUsers(),
             Response::HTTP_OK,
-            [],
+            [], // Empty header
             ['groups' => 'list_user']
         );
+
+        if ($pagination->verifInteger($request->get('page'))) {
+            $page = $request->get('page');
+            $limit = PaginationService::LIMIT_DEFAULT;
+            if ($pagination->verifInteger($request->get('limit'))) {
+                $limit = $request->query->get('limit');
+            }
+
+            $contentJson = (array) json_decode($json->getContent());
+
+            $json = $this->json(
+                array_slice($contentJson, $page * $limit, $limit),
+                Response::HTTP_OK,
+            );
+        }
 
         $jsonToArray = [
             "code" => 200,
@@ -140,7 +188,7 @@ class UserController extends AbstractController
             $json = $this->json(
                 $user,
                 Response::HTTP_OK,
-                [],
+                [], // Empty header
                 ['groups' => 'show_user']
             );
 
@@ -200,21 +248,33 @@ class UserController extends AbstractController
      *          ),
      *          @OA\Link(
      *              link="ShowUser",
-     *              description="GET /api/users/{id}, <br/> Show user's details",
+     *              description="Show details of a user<br/>The <code>id</code> value returned in the response can be used as the id parameter in<br/><code>GET /api/users/{id}</code>.",
      *              operationId="showUser",
-     *              @OA\Parameter(
-     *                  name="id",
-     *                  ref="#/components/parameters/id"
-     *              ),
+     *              parameters= {
+     *                  {
+     *                      "name": "id",
+     *                      "description": "User's id",
+     *                      "required": true,
+     *                      "type": "integer",
+     *                      "paramType": "path",
+     *                      "allowMultiple": false
+     *                  },
+     *              },
      *          ),
      *          @OA\Link(
      *              link="DeleteUser",
-     *              description="DELETE /api/users/{id}, <br/> Delete a user",
-     *              operationId="deleteId",
-     *              @OA\Parameter(
-     *                  name="id",
-     *                  ref="#/components/parameters/id"
-     *              ),
+     *              description="Delete a user<br/>The <code>id</code> value returned in the response can be used as the id parameter in<br/><code>DELETE /api/users/{id}</code>",
+     *              operationId="deleteUser",
+     *              parameters= {
+     *                  {
+     *                      "name": "id",
+     *                      "description": "User's id",
+     *                      "required": true,
+     *                      "type": "integer",
+     *                      "paramType": "path",
+     *                      "allowMultiple": false
+     *                  }
+     *              },
      *          ),
      *      ),
      *      @OA\Response(
@@ -228,8 +288,7 @@ class UserController extends AbstractController
      *       @OA\Response(
      *          response=409,
      *          ref="#/components/responses/409"
-     *      ),
-     *      
+     *      ),     
      * )
      *
      * @param  ManagerRegistry $doctrine
@@ -326,7 +385,7 @@ class UserController extends AbstractController
      * @OA\Delete(
      *      description="Delete the targeted user",
      *      tags={"User"},
-     *      operationId="deleteId",
+     *      operationId="deleteUser",
      *      @OA\Parameter(ref="#/components/parameters/id"),
      *      @OA\Response(
      *          response=204,

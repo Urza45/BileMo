@@ -5,17 +5,17 @@ nelmio_api_doc:
         description: API over HTTPS
     info:
       title: Bilemo
-      description: This is an awesome app!
+      description: This API provides a catalogue of smartphone.<br>Access is restricted to BileMo's client by JWT authentication.<br>The following interactive documentation will help BileMo's client to familiarise with the API and show you how to consume the different resources that are available.<br>This documentation provides all information needed to use the API and provides examples for all resources.
       version: 1.0.0
     tags:
       - name: Client
-        description: les clients
+        description: Possible transactions on clients
       - name: User
-        description: Les utilisateurs liés à un client
+        description: Possible transactions on users linked to a client
       - name: Product
-        description: Les produits
+        description: Possible transactions on products
       - name: Authentication
-        description: Récupération du token
+        description: Token recovery
     components:
       securitySchemes:
         Bearer:
@@ -112,11 +112,6 @@ nelmio_api_doc:
                   message:
                     type: string
                     example: "Resource already exists."
-      links:
-        userShow:
-          operationId: showUser
-          parameters:
-            id: "$request.path#/id"
     security:
       - Bearer: []
   areas: # to filter documented areas
@@ -129,4 +124,3 @@ nelmio_api_doc:
         - ^/api/login_check
         - ^/api/doc.json
       #disable_default_routes: true
-  models:

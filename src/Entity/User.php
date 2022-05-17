@@ -48,7 +48,7 @@ class User
     private $address;
 
     /**
-     * @ORM\Column(type="string", length=10, nullable=true)
+     * @ORM\Column(type="string", length=5, nullable=true)
      * @Groups({"show_user"})
      * @Assert\Length(
      *      min = 5,
