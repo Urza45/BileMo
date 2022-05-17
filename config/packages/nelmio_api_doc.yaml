@@ -5,7 +5,7 @@ nelmio_api_doc:
         description: API over HTTPS
     info:
       title: Bilemo
-      description: This is an awesome app!
+      description: This API provides a catalogue of smartphone.<br>Access is restricted to BileMo's client by JWT authentication.<br>The following interactive documentation will help BileMo's client to familiarise with the API and show you how to consume the different resources that are available.<br>This documentation provides all information needed to use the API and provides examples for all resources.
       version: 1.0.0
     tags:
       - name: Client

@@ -6,17 +6,10 @@ use App\Entity\Product;
 use OpenApi\Annotations as OA;
 use App\Repository\ProductRepository;
 use App\Services\PaginationService;
-use Doctrine\Persistence\ManagerRegistry;
-use Nelmio\ApiDocBundle\Annotation\Model;
-use Nelmio\ApiDocBundle\Annotation\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Serializer\Exception\NotEncodableValueException;
-use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 
 /**
  * ProductController
@@ -84,19 +77,19 @@ class ProductController extends AbstractController
         $json = $this->json(
             $repoProduct->findAll(),
             Response::HTTP_OK,
-            [],
+            [], // Empty header
             ['groups' => 'list_product']
         );
 
         if ($pagination->verifInteger($request->get('page'))) {
             $page = $request->get('page');
-            $limit = 10;
+            $limit = PaginationService::LIMIT_DEFAULT;
             if ($pagination->verifInteger($request->get('limit'))) {
                 $limit = $request->query->get('limit');
             }
             $json = $this->json(
                 $repoProduct->findBy(
-                    [],
+                    [], // Empty header
                     ['id' => 'ASC'],
                     $limit,
                     $page * $limit
@@ -159,7 +152,7 @@ class ProductController extends AbstractController
             $json = $this->json(
                 $product,
                 Response::HTTP_OK,
-                [],
+                [], // Empty header
                 ['groups' => 'show_product']
             );
             $jsonToArray = [

@@ -9,6 +9,8 @@ class PaginationService
     protected $page;
     protected $limit;
 
+    const LIMIT_DEFAULT = 10;
+
     public function __construct($page = 0, $limit = 5)
     {
         $this->page = $page;

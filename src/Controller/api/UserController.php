@@ -8,8 +8,6 @@ use App\Repository\UserRepository;
 use App\Services\PaginationService;
 use App\Repository\ClientRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use Nelmio\ApiDocBundle\Annotation\Model;
-use Nelmio\ApiDocBundle\Annotation\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -100,24 +98,22 @@ class UserController extends AbstractController
         $json = $this->json(
             $client->getUsers(),
             Response::HTTP_OK,
-            [],
+            [], // Empty header
             ['groups' => 'list_user']
         );
 
         if ($pagination->verifInteger($request->get('page'))) {
             $page = $request->get('page');
-            $limit = 10;
+            $limit = PaginationService::LIMIT_DEFAULT;
             if ($pagination->verifInteger($request->get('limit'))) {
                 $limit = $request->query->get('limit');
             }
 
-            $array = (array) json_decode($json->getContent());
+            $contentJson = (array) json_decode($json->getContent());
 
             $json = $this->json(
-                array_slice($array, $page * $limit, $limit),
+                array_slice($contentJson, $page * $limit, $limit),
                 Response::HTTP_OK,
-                [],
-                []
             );
         }
 
@@ -192,7 +188,7 @@ class UserController extends AbstractController
             $json = $this->json(
                 $user,
                 Response::HTTP_OK,
-                [],
+                [], // Empty header
                 ['groups' => 'show_user']
             );
 
